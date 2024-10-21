@@ -1,0 +1,104 @@
+<div>
+  <div class="navbar">
+    <button mat-icon-button (click)="toggleSidebar()">
+      <mat-icon>menu</mat-icon>
+    </button>
+    <img src="https://i.ibb.co/bWYqgpQ/Captura-de-pantalla-2024-10-17-173641-removebg-preview.png" 
+         alt="Logo DSR" 
+         class="logo" 
+         (click)="showNoticiasSection()">    
+    <div>
+      <div class="image-container">
+        <button mat-icon-button [matMenuTriggerFor]="Notification">
+          <mat-icon>notifications</mat-icon>
+        </button>
+        <mat-menu #Notification="matMenu">
+          <span>
+            Hola!, Aquí te mostraremos  
+            Notificaciones relacionada con posibles mejoras en DuocSwap..
+          </span>
+        </mat-menu>
+      </div>
+
+      <div class="image-container">
+        <button mat-icon-button [matMenuTriggerFor]="Question">
+          <mat-icon>help</mat-icon>
+        </button>
+        <mat-menu #Question="matMenu">
+          <span>
+            Hola!, Aquí te mostraremos  
+            Información relacionada a la página
+            y algún contacto nuevo...
+          </span>
+        </mat-menu>
+      </div>
+
+      <div class="image-container">
+        <button mat-icon-button [matMenuTriggerFor]="menu">
+          <mat-icon>account_circle</mat-icon>
+        </button>
+        <mat-menu #menu="matMenu">
+          <button mat-menu-item (click)="logout()">
+            <span>Cerrar Sesión</span>
+          </button>
+        </mat-menu>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-layout">
+    <div class="sidebar" id="sidebar" [ngClass]="{'hidden': isSidebarHidden}">
+      <ul>
+        <li><a (click)="showNoticiasSection()">Inicio</a></li>
+        <li><a (click)="showSearchTools()">Buscar Material educativo</a></li>
+        <li><a (click)="showRegistroEstudiantes()">Registrar Estudiantes</a></li>
+        <li><a (click)="showNewTool()">Registrar Material de intercambio</a></li>
+        <li><a (click)="showSancion()">Gestionar Sanciones</a></li> 
+        <li><a (click)="showPersonalisado()">Generar reporte</a></li>
+        <li><a (click)="showRegistroBlibliotecarios()">Nuevos Usuarios</a></li>
+        <li><a (click)="mostrarDevolucionDeMaterials()">Devolver Material educativo</a></li>
+      </ul>
+    </div>
+
+    <div class="content-section" [ngClass]="{'full-width': isSidebarHidden}">
+      <div *ngIf="showNoticias" class="seccion-noticias">
+        <h2>DuocSwap su plataforma interactiva</h2>
+        <div class="noticias-grid">
+          <div *ngFor="let noticia of noticiasItems" class="noticia-item">
+            <h3>{{ noticia.tipo }}</h3>
+            <img [src]="noticia.imagen" [alt]="noticia.tipo">
+            <p>{{ noticia.contenido }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="showSearch">
+        <app-search-tools></app-search-tools>
+      </div>
+      <div *ngIf="showNewTools">
+        <app-newtools></app-newtools>
+      </div>
+      <div *ngIf="showSanciones">
+        <app-sanciones></app-sanciones>
+      </div>
+      <div *ngIf="showRegistro">
+        <app-usuarios></app-usuarios>
+      </div>
+      <div *ngIf="showEstudiantes">
+        <app-registro-estudiante></app-registro-estudiante>
+      </div>
+      <div *ngIf="showReporte">
+        <app-personalizado></app-personalizado>
+      </div>
+      <div *ngIf="showDevolucionDeTools">
+        <app-devolucion-de-tools></app-devolucion-de-tools>
+      </div>
+    </div>
+
+
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; 2024 DuocSwap, Norma ISO/IEC 27001, todos los derechos reservados.</p>
+    </div>
+  </footer>
+</div>

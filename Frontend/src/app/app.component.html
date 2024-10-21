@@ -1,0 +1,29 @@
+<div class="main-content">
+  <router-outlet></router-outlet>
+  <div class="sidebar" [ngClass]="{'hidden': isSidebarHidden}">
+    <ul>
+      <li><a href="#welcome">Inicio</a></li>
+      <li><a (click)="showSearchTools()">Búsqueda de Material Academico</a></li>
+      <li><a href="#registrar-estudiante">Registrar Estudiante</a></li>
+      <li><a (click)="showNewTool()">Registrar Material de intercambio</a></li>
+       <li><a (click)="showSancion()">Gestionar Sanciones</a></li> 
+      <li><a href="#sancion">Sanciones</a></li>
+      <li><a href="#reporte">Generar reporte</a></li>
+      <li><a (click)="showEmailConfirmation()">Confirmar Email</a></li>
+    </ul>
+  </div>
+  <div class="content-section">
+    <div *ngIf="showSearch">
+      <app-search-tools></app-search-tools>
+    </div>
+    <div *ngIf="showNewTools">
+      <app-newtools></app-newtools>
+    </div>
+    <div *ngIf="showEmailConfirm">
+      <app-confirmacion-de-email></app-confirmacion-de-email>
+    </div>
+    <div *ngIf="showSanciones">
+      <app-sanciones></app-sanciones>
+    </div>
+  </div>
+</div>

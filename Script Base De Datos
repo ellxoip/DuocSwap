@@ -1,0 +1,140 @@
+-- Eliminar la base de datos si ya existe
+DROP DATABASE IF EXISTS Swaps;
+
+-- Crear la base de datos
+CREATE DATABASE Swaps;
+
+-- Usar la base de datos
+USE Swaps;
+
+-- Crear tabla 'Estudiante'
+CREATE TABLE Estudiante (
+    NumeroControl VARCHAR(13) PRIMARY KEY,
+    NombreCompleto NVARCHAR(50) NOT NULL,
+    Correo NVARCHAR(100) NOT NULL,
+    CorreoConfirmado BOOLEAN DEFAULT FALSE,
+    TokenConfirmacion VARCHAR(40)
+);
+
+-- Crear tabla 'Usuario' para Administradores
+CREATE TABLE Usuario (
+    IdUsuario INT AUTO_INCREMENT PRIMARY KEY,
+    NombreCompleto NVARCHAR(50) NOT NULL,
+    Correo NVARCHAR(100) NOT NULL,
+    Telefono NVARCHAR(15) NOT NULL,
+    NombreUsuario NVARCHAR(50) NOT NULL UNIQUE,
+    Contrasena NVARCHAR(255) NOT NULL,
+    Rol NVARCHAR(20) NOT NULL DEFAULT 'Admin' -- Agregar campo de rol para distinguir roles
+);
+
+-- Crear tabla 'Material'
+CREATE TABLE Material (
+    Serie NVARCHAR(14) PRIMARY KEY,
+    Tipo NVARCHAR(100) NOT NULL,
+    Marca NVARCHAR(100) NOT NULL,
+    Modelo NVARCHAR(100) NOT NULL,
+    Categoria NVARCHAR(100) NOT NULL,
+    Descripcion TEXT NOT NULL,
+    Cantidades INT NOT NULL,
+    Portada LONGBLOB
+);
+
+-- Crear tabla 'Intercambio'
+CREATE TABLE Intercambio (
+    IdIntercambio INT AUTO_INCREMENT PRIMARY KEY,
+    NumeroControlOfrece VARCHAR(13) NOT NULL, -- Estudiante que ofrece
+    NumeroControlRecibe VARCHAR(13) NOT NULL, -- Estudiante que recibe
+    Serie NVARCHAR(14) NOT NULL,
+    FechaIntercambio DATE,
+    FechaDevolucion DATE,
+    Estado NVARCHAR(30) DEFAULT 'Pendiente',
+    FOREIGN KEY (NumeroControlOfrece) REFERENCES Estudiante(NumeroControl),
+    FOREIGN KEY (NumeroControlRecibe) REFERENCES Estudiante(NumeroControl),
+    FOREIGN KEY (Serie) REFERENCES Material(Serie)
+);
+
+-- Crear tabla 'Sanciones'
+CREATE TABLE Sanciones (
+    IdSancion INT AUTO_INCREMENT PRIMARY KEY,
+    NumeroControl VARCHAR(13) NOT NULL,
+    Descripcion TEXT,
+    FechaInicio DATE,
+    Estatus NVARCHAR(50),
+    IdIntercambio INT,
+    FOREIGN KEY (NumeroControl) REFERENCES Estudiante(NumeroControl),
+    FOREIGN KEY (IdIntercambio) REFERENCES Intercambio(IdIntercambio)
+);
+
+-- Crear tabla 'Publicaciones' para el foro de intercambio
+CREATE TABLE Publicaciones (
+    IdPublicacion INT AUTO_INCREMENT PRIMARY KEY,
+    NumeroControl VARCHAR(13) NOT NULL,
+    Titulo NVARCHAR(100) NOT NULL,
+    Descripcion TEXT NOT NULL,
+    FechaPublicacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    Estado NVARCHAR(20) DEFAULT 'Disponible',
+    FOREIGN KEY (NumeroControl) REFERENCES Estudiante(NumeroControl)
+);
+
+-- Crear tabla 'Mensajes' para comunicación entre estudiantes
+CREATE TABLE Mensajes (
+    IdMensaje INT AUTO_INCREMENT PRIMARY KEY,
+    EmisorId VARCHAR(13) NOT NULL, -- Estudiante que envía el mensaje
+    ReceptorId VARCHAR(13) NOT NULL, -- Estudiante que recibe el mensaje
+    Contenido TEXT NOT NULL,
+    FechaEnvio DATETIME DEFAULT CURRENT_TIMESTAMP,
+    Leido BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (EmisorId) REFERENCES Estudiante(NumeroControl),
+    FOREIGN KEY (ReceptorId) REFERENCES Estudiante(NumeroControl)
+);
+
+-- Procedimiento para actualizar Sanciones basadas en las fechas de devolución
+DELIMITER //
+
+CREATE PROCEDURE ActualizarSanciones()
+BEGIN
+    DECLARE done INT DEFAULT 0;
+    DECLARE sancionId INT;
+    DECLARE idIntercambio INT;
+    DECLARE cur CURSOR FOR SELECT IdSancion, IdIntercambio FROM Sanciones WHERE Estatus = 'Pendiente';
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
+
+    OPEN cur;
+
+    read_loop: LOOP
+        FETCH cur INTO sancionId, idIntercambio;
+        IF done THEN
+            LEAVE read_loop;
+        END IF;
+
+        -- Actualizar la descripción de la sanción basada en los días de retraso
+        UPDATE Sanciones m
+        JOIN Intercambio p ON s.IdIntercambio = p.IdIntercambio
+        SET m.Descripcion = CONCAT('Retraso de ', DATEDIFF(CURDATE(), p.FechaDevolucion), ' días')
+        WHERE m.IdSancion = sancionId AND CURDATE() > p.FechaDevolucion;
+    END LOOP;
+
+    CLOSE cur;
+END //
+
+DELIMITER ;
+
+-- Evento para ejecutar la actualización de sanciones cada día
+DROP EVENT IF EXISTS ActualizarSancionesDiarias;
+CREATE EVENT IF NOT EXISTS ActualizarSancionesDiarias
+ON SCHEDULE EVERY 1 DAY
+DO
+    CALL ActualizarSanciones();
+
+-- Consultas de ejemplo para verificar los datos
+SELECT * FROM Estudiante;
+SELECT * FROM Usuario;
+SELECT * FROM Material;
+SELECT * FROM Intercambio;
+SELECT * FROM Sanciones;
+SELECT * FROM Publicaciones;
+SELECT * FROM Mensajes;
+
+-- Configurar el usuario 'root' con contraseña
+ALTER USER 'root'@'localhost' IDENTIFIED BY 'duocswap';
+FLUSH PRIVILEGES;
